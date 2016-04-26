@@ -6,8 +6,8 @@ class House(object):
         self.width = width
         self.length = length
         self.free = free
-        map = Map()
-        self.position = map.getRandom(self.width, self.length, self.free)
+        self.map = Map()
+        self.position = self.map.getRandom(self.width, self.length, self.free)
         self.pos_X_L = self.position[0]
         self.pos_X_R = self.position[0] + width
         self.pos_Y_O = self.position[1]
@@ -116,9 +116,8 @@ def placeHouses(numhouses):
 
 def run(numhouses):
 
-    map = Map()
     houses = placeHouses(numhouses)
-    map.checkDistance(houses[0], houses, numhouses)
+    houses[0].map.checkDistance(houses[0], houses, numhouses)
     #replaceHouses(houses)
 
 run = run(2)
