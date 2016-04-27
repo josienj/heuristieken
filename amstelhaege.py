@@ -40,42 +40,59 @@ class Map(object):
             if house.pos_X_L == houses[i].pos_X_L:
                 continue
 
-            if houses[i].pos_X_L > house.pos_X_L:
-                if houses[i].pos_X_L < house.pos_X_R:
-                    if house.pos_Y_O < houses[i].pos_Y_O:
-                        distance = houses[i].pos_Y_O - house.pos_Y_B
-                        print "house-i boven house"
-                    else:
-                        distance = houses[i].pos_Y_B - house.pos_Y_O
-                        print "house-i onder house"
-                elif houses[i].pos_Y_O > house.pos_Y_O:
+            # If house and house[i] overlap on x-axis
+            elif (house.pos_X_L > houses[i].pos_X_L and house.pos_X_L < houses[i].pos_X_R
+                or houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L < house.pos_X_R):
+                # If house is lower than house[i]
+                if house.pos_Y_O < houses[i].pos_Y_O:
+                    distance = houses[i].pos_Y_O - house.pos_Y_B
+                    print "house lower than house[i]"
+                # If house is higher than house[i]
+                elif house.pos_Y_O > houses[i].pos_Y_O:
+                    distance = house.pos_Y_O - houses[i].pos_Y_B
+                    print "house higher than house[i]"
+
+            # If house and house[i] overlap on y-axis
+            elif (house.pos_Y_O > houses[i].pos_Y_O and house.pos_Y_O < houses[i].pos_Y_B
+                  or houses[i].pos_Y_O > house.pos_Y_O and houses[i].pos_Y_O < house.pos_Y_B):
+                # If house is lower than house[i]
+                if house.pos_X_L > houses[i].pos_X_L:
+                    distance = house.pos_X_L - houses[i].pos_X_R
+                    print "house right of house[i]"
+                # If house is higher than house[i]
+                elif house.pos_X_L < houses[i].pos_X_L:
+                    distance = houses[i].pos_X_L - house.pos_X_R
+                    print "house left of house[i]"
+
+            # If house is left of house[i]
+            elif houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L >= house.pos_X_R:
+                # If house is lower than house[i]
+                if houses[i].pos_Y_O > house.pos_Y_O:
                     dY = houses[i].pos_Y_O - house.pos_Y_B
                     dX = houses[i].pos_X_L - house.pos_X_R
                     distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
-                    print "house-i rechts boven house"
+                    print "house left under house[i]"
+                # if house is higher than house[i]
                 elif houses[i].pos_Y_O < house.pos_Y_O:
                     dY = house.pos_Y_O - houses[i].pos_Y_B
                     dX = houses[i].pos_X_L - house.pos_X_R
                     distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
-                    print "house-i rechts onder house"
-            if houses[i].pos_X_L < house.pos_X_L:
-                if houses[i].pos_X_R > house.pos_X_L:
-                    if house.pos_Y_O < houses[i].pos_Y_O:
-                        distance = houses[i].pos_Y_O - house.pos_Y_B
-                        print "house-i boven house"
-                    else:
-                        distance = houses[i].pos_Y_B - house.pos_Y_O
-                        print "house-i onder house"
-                elif houses[i].pos_Y_O > house.pos_Y_O:
+                    print "house left above house[i]"
+
+            # If house is right of house[i]
+            elif houses[i].pos_X_L < house.pos_X_L and houses[i].pos_X_R <= house.pos_X_L:
+                # If house is lower than house[i]
+                if houses[i].pos_Y_O > house.pos_Y_O:
                     dY = houses[i].pos_Y_O - house.pos_Y_B
                     dX = house.pos_X_L - houses[i].pos_X_R
                     distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
-                    print "house-i links boven house"
+                    print "house right under house[i]"
+                # If house is higher than house[i]
                 elif houses[i].pos_Y_O < house.pos_Y_O:
                     dY = house.pos_Y_O - houses[i].pos_Y_B
                     dX = house.pos_X_L - houses[i].pos_X_R
                     distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
-                    print "house-i links onder house"
+                    print "house left under house[i]"
 
             print distance
 
@@ -87,20 +104,16 @@ def placeHouses(numhouses):
     while i < (numhouses * 0.6):
         print i, "in 1st while"
         houses.append(House(8, 8, 2))
-        print "position in run = ", houses[i].position, '\n'
         i += 1
     while i >= (numhouses * 0.6) and i < (numhouses * 0.85):
         print i, "in 2nd while"
         houses.append(House(10, 7.5, 3))
-        print "position in run = ", houses[i].position, '\n'
         i += 1
     while i >= (numhouses * 0.85) and i < numhouses:
         print i, "in 3rd while"
         houses.append(House(11, 10.5, 6))
-        print "position in run = ", houses[i].position, '\n'
         i += 1
     return houses
-
 
 
 #def replaceHouses(houses):
@@ -120,4 +133,4 @@ def run(numhouses):
     houses[0].map.checkDistance(houses[0], houses, numhouses)
     #replaceHouses(houses)
 
-run = run(2)
+run = run(20)
