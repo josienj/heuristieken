@@ -20,20 +20,17 @@ class Map(object):
         self.x_axis = 150
         self.y_axis = 160
 
-
     def getrandom(self, width, length, free):
         x = random.uniform((0 + free), (self.x_axis - (width + free)))
         y = random.uniform((0 + free), (self.y_axis - (length + free)))
         print "(x, y) = ", x, y
         return x, y
 
-
-    def checkOverlap(self, house, houses, numhouses):
-    # if (overlap):
-        # return True
-    # else:
-        return False
-
+    def checkoverlap(self, house, houses, numhouses):
+        # if (overlap):
+            # return True
+        # else:
+            return False
 
     def checkdistance(self, house, houses, numhouses):
         for i in range(numhouses):
@@ -42,7 +39,7 @@ class Map(object):
 
             # If house and house[i] overlap on x-axis
             elif (house.pos_X_L > houses[i].pos_X_L and house.pos_X_L < houses[i].pos_X_R
-                or houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L < house.pos_X_R):
+                  or houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L < house.pos_X_R):
                 # If house is lower than house[i]
                 if house.pos_Y_O < houses[i].pos_Y_O:
                     distance = houses[i].pos_Y_O - house.pos_Y_B
@@ -64,33 +61,30 @@ class Map(object):
             elif houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L >= house.pos_X_R:
                 # If house is lower than house[i]
                 if houses[i].pos_Y_O > house.pos_Y_O:
-                    dY = houses[i].pos_Y_O - house.pos_Y_B
-                    dX = houses[i].pos_X_L - house.pos_X_R
-                    distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
+                    dy = houses[i].pos_Y_O - house.pos_Y_B
+                    dx = houses[i].pos_X_L - house.pos_X_R
                 # if house is higher than house[i]
                 elif houses[i].pos_Y_O < house.pos_Y_O:
-                    dY = house.pos_Y_O - houses[i].pos_Y_B
-                    dX = houses[i].pos_X_L - house.pos_X_R
-                    distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
+                    dy = house.pos_Y_O - houses[i].pos_Y_B
+                    dx = houses[i].pos_X_L - house.pos_X_R
+                distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
             # If house is right of house[i]
             elif houses[i].pos_X_L < house.pos_X_L and houses[i].pos_X_R <= house.pos_X_L:
                 # If house is lower than house[i]
                 if houses[i].pos_Y_O > house.pos_Y_O:
-                    dY = houses[i].pos_Y_O - house.pos_Y_B
-                    dX = house.pos_X_L - houses[i].pos_X_R
-                    distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
+                    dy = houses[i].pos_Y_O - house.pos_Y_B
+                    dx = house.pos_X_L - houses[i].pos_X_R
                 # If house is higher than house[i]
                 elif houses[i].pos_Y_O < house.pos_Y_O:
-                    dY = house.pos_Y_O - houses[i].pos_Y_B
-                    dX = house.pos_X_L - houses[i].pos_X_R
-                    distance = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2))
+                    dy = house.pos_Y_O - houses[i].pos_Y_B
+                    dx = house.pos_X_L - houses[i].pos_X_R
+                distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
             print distance
 
 
 def placehouses(numhouses):
-
     houses = []
     i = 0
     while i < (numhouses * 0.6):
