@@ -28,7 +28,11 @@ class Map(object):
         return x, y
 
 
-    # def checkOverlap(self, house, houses, numhouses):
+    def checkOverlap(self, house, houses, numhouses):
+    # if (overlap):
+        # return True
+    # else:
+        return False
 
 
     def checkdistance(self, house, houses, numhouses):
