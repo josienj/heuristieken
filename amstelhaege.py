@@ -20,11 +20,13 @@ class Map(object):
         self.x_axis = 150
         self.y_axis = 160
 
+
     def getrandom(self, width, length, free):
         x = random.uniform((0 + free), (self.x_axis - (width + free)))
         y = random.uniform((0 + free), (self.y_axis - (length + free)))
         print "(x, y) = ", x, y
         return x, y
+
 
     # def checkOverlap(self, house, houses, numhouses):
 
@@ -116,6 +118,6 @@ def run(numhouses):
 
     houses = placehouses(numhouses)
     houses[0].map.checkdistance(houses[0], houses, numhouses)
-    #replaceHouses(houses)
+    # replaceHouses(houses)
 
 run = run(20)
