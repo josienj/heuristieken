@@ -31,94 +31,102 @@ class Map(object):
         else:
             return False
 
-    def checkdistance(self, house, houses, numhouses):
-        for i in range(numhouses):
-            if house.pos_X_L == houses[i].pos_X_L:
-                continue
+    def checkdistance(self, house, housechecked, numhouses):
+        XL1 = house.pos_X_L
+        XR1 = house.pos_X_R
+        YO1 = house.pos_Y_O
+        YB1 = house.pos_Y_B
+        XL2 = housechecked.pos_X_L
+        XR2 = housechecked.pos_X_R
+        YO2 = housechecked.pos_Y_O
+        YB2 = housechecked.pos_Y_B
 
-            # If house and house[i] overlap on x-axis
-            elif (house.pos_X_L > houses[i].pos_X_L and house.pos_X_L < houses[i].pos_X_R
-                  or houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L < house.pos_X_R):
-                # If house is lower than house[i]
-                if house.pos_Y_O < houses[i].pos_Y_O:
-                    distance = houses[i].pos_Y_O - house.pos_Y_B
-                # If house is higher than house[i]
-                elif house.pos_Y_O > houses[i].pos_Y_O:
-                    distance = house.pos_Y_O - houses[i].pos_Y_B
+        if XL1 == XL2:
+            distance = 0
 
-            # If house and house[i] overlap on y-axis
-            elif (house.pos_Y_O > houses[i].pos_Y_O and house.pos_Y_O < houses[i].pos_Y_B
-                  or houses[i].pos_Y_O > house.pos_Y_O and houses[i].pos_Y_O < house.pos_Y_B):
-                # If house is lower than house[i]
-                if house.pos_X_L > houses[i].pos_X_L:
-                    distance = house.pos_X_L - houses[i].pos_X_R
-                # If house is higher than house[i]
-                elif house.pos_X_L < houses[i].pos_X_L:
-                    distance = houses[i].pos_X_L - house.pos_X_R
+        # If house and house[i] overlap on x-axis
+        elif (XL1 > XL2 and XL1 < XR2 or XL2 > XL1 and XL2 < XR1):
+            # If house is lower than house[i]
+            if YO1 < YO2:
+                distance = YO2 - YB1
+            # If house is higher than house[i]
+            elif YO1 > YO2:
+                distance = YO1 - YB2
 
-            # If house is left of house[i]
-            elif houses[i].pos_X_L > house.pos_X_L and houses[i].pos_X_L >= house.pos_X_R:
-                # If house is lower than house[i]
-                if houses[i].pos_Y_O > house.pos_Y_O:
-                    dy = houses[i].pos_Y_O - house.pos_Y_B
-                    dx = houses[i].pos_X_L - house.pos_X_R
-                # if house is higher than house[i]
-                elif houses[i].pos_Y_O < house.pos_Y_O:
-                    dy = house.pos_Y_O - houses[i].pos_Y_B
-                    dx = houses[i].pos_X_L - house.pos_X_R
-                distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        # If house and house[i] overlap on y-axis
+        elif (YO1 > YO2 and YO1 < YB2 or YO2 > YO1 and YO2 < YB1):
+            # If house is lower than house[i]
+            if XL1 > XL2:
+                distance = XL1 - XR2
+            # If house is higher than house[i]
+            elif XL1 < XL2:
+                distance = XL2 - XR1
 
-            # If house is right of house[i]
-            elif houses[i].pos_X_L < house.pos_X_L and houses[i].pos_X_R <= house.pos_X_L:
-                # If house is lower than house[i]
-                if houses[i].pos_Y_O > house.pos_Y_O:
-                    dy = houses[i].pos_Y_O - house.pos_Y_B
-                    dx = house.pos_X_L - houses[i].pos_X_R
-                # If house is higher than house[i]
-                elif houses[i].pos_Y_O < house.pos_Y_O:
-                    dy = house.pos_Y_O - houses[i].pos_Y_B
-                    dx = house.pos_X_L - houses[i].pos_X_R
-                distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        # If house is left of house[i]
+        elif XL2 > XL1 and XL2 >= XR1:
+            # If house is lower than house[i]
+            if YO2 > YO1:
+                dy = YO2 - YB1
+                dx = XL2 - XR1
+            # if house is higher than house[i]
+            elif YO2 < YO1:
+                dy = YO1 - YB2
+                dx = XL2 - XR1
+            distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
-            print house.position
-            print houses[i].position
-            print distance
-            if self.checkoverlap(house, houses[i], distance):
-                print "There is an overlap with house[", i, "]"
+        # If house is right of house[i]
+        elif XL2 < XL1 and XR2 <= XL1:
+            # If house is lower than house[i]
+            if YO2 > YO1:
+                dy = YO2 - YB1
+                dx = XL1 - XR2
+            # If house is higher than house[i]
+            elif YO2 < YO1:
+                dy = YO1 - YB2
+                dx = XL1 - XR2
+            distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+
+        print "distance = ", distance
+        if self.checkoverlap(house, housechecked, distance):
+            print "There is an overlap with this house"
+        return distance
 
 
 def placehouses(numhouses):
     houses = []
     i = 0
     while i < (numhouses * 0.6):
-        print i, "in 1st while"
         houses.append(House(8, 8, 2))
         i += 1
     while i >= (numhouses * 0.6) and i < (numhouses * 0.85):
-        print i, "in 2nd while"
         houses.append(House(10, 7.5, 3))
         i += 1
     while i >= (numhouses * 0.85) and i < numhouses:
-        print i, "in 3rd while"
         houses.append(House(11, 10.5, 6))
         i += 1
     return houses
 
 
-# def replaceHouses(houses):
- #   for i in range(20):
-  #      tempposition = houses[i].position
-   #     houses[i].position = map.getRandom(houses[i].width, houses[i].length, houses[i].free)
-    #    print houses[i].position
-     #   if (checkoverlap(house[i], houses):
+# def replacehouse(house, houses, numhouses):
+  #      tempposition = house.position
+   #     house.position = map.getrandom(house.width, house.length, house.free)
+    #    print "position of house = ", house.position
+    #    for i in numhouses:
+            # distance = house.map.checkdistance(house, houses[i], numhouses)
+        #   if (checkoverlap(house, houses, distance):
       #      houses[i].position = tempposition
+      #      break
        # print houses[i].position
 
 
 def run(numhouses):
 
     houses = placehouses(numhouses)
-    houses[0].map.checkdistance(houses[0], houses, numhouses)
-    # replaceHouses(houses)
+    for i in range(numhouses):
+        for j in range(numhouses):
+            if i == j:
+                continue
+            houses[i].map.checkdistance(houses[i], houses[j], numhouses)
+    # replacehouseh(houses)
 
-run = run(60)
+run = run(10)
