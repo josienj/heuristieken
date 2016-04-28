@@ -31,7 +31,7 @@ class Map(object):
         else:
             return False
 
-    def checkdistance(self, house, housechecked, numhouses):
+    def checkdistance(self, house, housechecked):
         XL1 = house.pos_X_L
         XR1 = house.pos_X_R
         YO1 = house.pos_Y_O
@@ -107,16 +107,19 @@ def placehouses(numhouses):
     return houses
 
 
-# def replacehouse(house, houses, numhouses):
-  #      tempposition = house.position
-   #     house.position = map.getrandom(house.width, house.length, house.free)
-    #    print "position of house = ", house.position
-    #    for i in numhouses:
-            # distance = house.map.checkdistance(house, houses[i], numhouses)
-        #   if (checkoverlap(house, houses, distance):
-      #      houses[i].position = tempposition
-      #      break
-       # print houses[i].position
+def replacehouse(house, houses, numhouses, housenumber):
+    tempposition = house.position
+    house.position = house.map.getrandom(house.width, house.length, house.free)
+    print "position of house before replacing = ", house.position
+    for i in range(numhouses):
+        if i != housenumber:
+            distance = house.map.checkdistance(house, houses[i])
+            if house.map.checkoverlap(house, houses[i], distance):
+                houses[i].position = tempposition
+                break
+        else:
+            continue
+    print "position of house after replacing = ", houses[i].position
 
 
 def run(numhouses):
@@ -124,9 +127,9 @@ def run(numhouses):
     houses = placehouses(numhouses)
     for i in range(numhouses):
         for j in range(numhouses):
+            replacehouse(houses[i], houses, numhouses, i)
             if i == j:
                 continue
-            houses[i].map.checkdistance(houses[i], houses[j], numhouses)
-    # replacehouseh(houses)
+
 
 run = run(10)
