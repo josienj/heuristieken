@@ -23,13 +23,12 @@ class Map(object):
     def getrandom(self, width, length, free):
         x = random.uniform((0 + free), (self.x_axis - (width + free)))
         y = random.uniform((0 + free), (self.y_axis - (length + free)))
-        print "(x, y) = ", x, y
         return x, y
 
-    def checkoverlap(self, house, houses, numhouses):
-        # if (overlap):
-            # return True
-        # else:
+    def checkoverlap(self, house, checkedhouse, distance):
+        if distance < house.free or distance < checkedhouse.free:
+            return True
+        else:
             return False
 
     def checkdistance(self, house, houses, numhouses):
@@ -81,7 +80,11 @@ class Map(object):
                     dx = house.pos_X_L - houses[i].pos_X_R
                 distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
+            print house.position
+            print houses[i].position
             print distance
+            if self.checkoverlap(house, houses[i], distance):
+                print "There is an overlap with house[", i, "]"
 
 
 def placehouses(numhouses):
@@ -107,7 +110,7 @@ def placehouses(numhouses):
   #      tempposition = houses[i].position
    #     houses[i].position = map.getRandom(houses[i].width, houses[i].length, houses[i].free)
     #    print houses[i].position
-     #   if (replaceHouses(house[i], houses):
+     #   if (checkoverlap(house[i], houses):
       #      houses[i].position = tempposition
        # print houses[i].position
 
@@ -118,4 +121,4 @@ def run(numhouses):
     houses[0].map.checkdistance(houses[0], houses, numhouses)
     # replaceHouses(houses)
 
-run = run(20)
+run = run(60)
