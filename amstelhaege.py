@@ -86,7 +86,6 @@ class Map(object):
                 dx = XL1 - XR2
             distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
-        print "distance = ", distance
         if self.checkoverlap(house, housechecked, distance):
             print "There is an overlap with this house"
         return distance
@@ -115,11 +114,12 @@ def replacehouse(house, houses, numhouses, housenumber):
         if i != housenumber:
             distance = house.map.checkdistance(house, houses[i])
             if house.map.checkoverlap(house, houses[i], distance):
-                houses[i].position = tempposition
+                print "house can not be replaced"
+                house.position = tempposition
                 break
         else:
             continue
-    print "position of house after replacing = ", houses[i].position
+    print "position of house after replacing = ", house.position
 
 
 def run(numhouses):
