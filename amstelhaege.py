@@ -153,35 +153,31 @@ def placehouses(numhouses):
 
 
 def replacehouse(house, houses, numhouses, housenumber):
+    # print house.position
     tempposition = house.position
     tempvalue = calculatevalue(houses, numhouses)
-    tempdistance = calculatedistance(houses, numhouses)
     house.position = house.map.getrandom(house.width, house.length, house.free)
-    for i in range(numhouses):
-        if i != housenumber:
-            distance = checkdistance(house, houses[i])
-            if calculatevalue(houses, numhouses) < tempvalue:
-                house.position = tempposition
-                break
-            # if calculatedistance(houses, numhouses) < tempdistance:
-            #     house.position = tempposition
-            #     break
-            if checkoverlap(house, houses[i], distance):
-                house.position = tempposition
-                break
-        else:
-            continue
-
-        print tempvalue #, '\n'
-
+    if calculatevalue(houses, numhouses) < tempvalue:
+        house.position = tempposition
+    else:
+        for i in range(numhouses):
+            if i != housenumber:
+                distance = checkdistance(house, houses[i])
+                if checkoverlap(house, houses[i], distance):
+                    house.position = tempposition
+                    break
+            else:
+                continue
+    # print house.position
+    # print calculatevalue(houses, numhouses)
+    return house
 
 def run(numhouses):
+    houses = placehouses(numhouses)
     for i in range(1000):
-        houses = placehouses(numhouses)
-        calculatevalue(houses, numhouses)
-        calculatedistance(houses, numhouses)
         for j in range(numhouses):
-            replacehouse(houses[j], houses, numhouses, j)
+            houses[j] = replacehouse(houses[j], houses, numhouses, j)
+            print calculatevalue(houses, numhouses)
+            print houses[0].position, houses[1].position, houses[2].position
 
-
-run = run(20)
+run = run(3)
