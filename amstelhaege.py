@@ -11,10 +11,12 @@ class House(object):
         self.free = free
         self.map = Map()
         self.position = self.map.getrandom(self.width, self.length, self.free)
+
+    def getcoordinates(self):
         self.pos_X_L = self.position[0]
-        self.pos_X_R = self.position[0] + width
+        self.pos_X_R = self.position[0] + self.width
         self.pos_Y_O = self.position[1]
-        self.pos_Y_B = self.position[1] + length
+        self.pos_Y_B = self.position[1] + self.length
 
 
 class Map(object):
@@ -168,16 +170,34 @@ def replacehouse(house, houses, numhouses, housenumber):
                     break
             else:
                 continue
-    # print house.position
-    # print calculatevalue(houses, numhouses)
-    return house
+
+    print "before replacing: ", houses[0].position, houses[1].position
+
+    houses[housenumber].position = house.position
+
+    print "after replacing: ", houses[0].position, houses[1].position
+    return houses
 
 def run(numhouses):
     houses = placehouses(numhouses)
-    for i in range(1000):
+    for i in range(numhouses):
+        houses[i].getcoordinates()
+    totalvalue = calculatevalue(houses, numhouses)
+    print totalvalue
+    print "before returning: ", houses[0].position, houses[1].position
+    print houses[0].pos_X_L
+    print houses[1].pos_X_L
+    for i in range(1):
         for j in range(numhouses):
-            houses[j] = replacehouse(houses[j], houses, numhouses, j)
-            print calculatevalue(houses, numhouses)
-            print houses[0].position, houses[1].position, houses[2].position
+            houses = replacehouse(houses[j], houses, numhouses, j)
+            print houses[0].pos_X_L
+            print houses[1].pos_X_L
+            print "after returning: ", houses[0].position, houses[1].position
+            totalvalue = calculatevalue(houses, numhouses)
+            print "totavalue:", totalvalue
+    # houses = placehouses(numhouses)
+    # print "after returning: ", houses[0].position, houses[1].position
+    # totalvalue = calculatevalue(houses, numhouses)
+    # print totalvalue
 
-run = run(3)
+run = run(2)
