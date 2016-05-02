@@ -3,16 +3,19 @@ import math
 
 
 class House(object):
-    def __init__(self, width, length, free):
+    def __init__(self, width, length, free, houses):
         self.basevalue = 0
         self.perc = 0.00
         self.width = width
         self.length = length
         self.free = free
         self.map = Map()
+        listlength = len(houses)
         self.position = self.map.getrandom(self.width, self.length, self.free)
-
-    def getcoordinates(self):
+        if listlength != 0:
+            for i in range(listlength):
+                while checkoverlap(self, houses[i], checkdistance(self, houses[i])) != False:
+                    self.position = self.map.getrandom(self.width, self.length, self.free)
         self.pos_X_L = self.position[0]
         self.pos_X_R = self.position[0] + self.width
         self.pos_Y_O = self.position[1]
@@ -133,32 +136,41 @@ def checkdistance(house, housechecked):
     return distance
 
 
+def getcoordinates(house):
+    house.pos_X_L = house.position[0]
+    house.pos_X_R = house.position[0] + house.width
+    house.pos_Y_O = house.position[1]
+    house.pos_Y_B = house.position[1] + house.length
+
+
 def placehouses(numhouses):
     houses = []
     i = 0
+
     while i < (numhouses * 0.6):
-        houses.append(House(8, 8, 2))
+        houses.append(House(8, 8, 2, houses))
         houses[i].basevalue = 285000
         houses[i].perc = 0.03
         i += 1
     while i >= (numhouses * 0.6) and i < (numhouses * 0.85):
-        houses.append(House(10, 7.5, 3))
+        houses.append(House(10, 7.5, 3, houses))
         houses[i].basevalue = 399000
         houses[i].perc = 0.04
         i += 1
     while i >= (numhouses * 0.85) and i < numhouses:
-        houses.append(House(11, 10.5, 6))
+        houses.append(House(11, 10.5, 6, houses))
         houses[i].basevalue = 610000
         houses[i].perc = 0.06
         i += 1
+
     return houses
 
 
 def replacehouse(house, houses, numhouses, housenumber):
-    # print house.position
     tempposition = house.position
     tempvalue = calculatevalue(houses, numhouses)
     house.position = house.map.getrandom(house.width, house.length, house.free)
+    getcoordinates(house)
     if calculatevalue(houses, numhouses) < tempvalue:
         house.position = tempposition
     else:
@@ -171,33 +183,29 @@ def replacehouse(house, houses, numhouses, housenumber):
             else:
                 continue
 
-    print "before replacing: ", houses[0].position, houses[1].position
-
     houses[housenumber].position = house.position
-
-    print "after replacing: ", houses[0].position, houses[1].position
     return houses
 
 def run(numhouses):
     houses = placehouses(numhouses)
-    for i in range(numhouses):
-        houses[i].getcoordinates()
     totalvalue = calculatevalue(houses, numhouses)
-    print totalvalue
-    print "before returning: ", houses[0].position, houses[1].position
-    print houses[0].pos_X_L
-    print houses[1].pos_X_L
-    for i in range(1):
+    for i in range(numhouses):
+        for j in range(numhouses):
+            if i != j:
+                if checkoverlap(houses[i], houses[j], checkdistance(houses[i], houses[j])):
+                    print "There is overlap"
+    for i in range(100):
         for j in range(numhouses):
             houses = replacehouse(houses[j], houses, numhouses, j)
-            print houses[0].pos_X_L
-            print houses[1].pos_X_L
-            print "after returning: ", houses[0].position, houses[1].position
+            getcoordinates(houses[j])
             totalvalue = calculatevalue(houses, numhouses)
-            print "totavalue:", totalvalue
-    # houses = placehouses(numhouses)
-    # print "after returning: ", houses[0].position, houses[1].position
-    # totalvalue = calculatevalue(houses, numhouses)
-    # print totalvalue
+        print "totavalue in run '#'",i, "= ", totalvalue
+    for i in range(numhouses):
+        for j in range(numhouses):
+            if i != j:
+                if checkoverlap(houses[i], houses[j], checkdistance(houses[i], houses[j])):
+                    print "There is overlap at the end"
 
-run = run(2)
+
+
+run = run(20)
