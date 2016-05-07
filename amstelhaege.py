@@ -30,7 +30,7 @@ class House(object):
                 while checkoverlap(self, houses[i], checkdistance(self, houses[i])) != False:
                     self.position = self.map.getrandom(self.width, self.length, self.free)
                     getcoordinates(self)
-        self.rect = pygame.Rect(self.pos_X_L, self.pos_Y_O, self.width, self.length)
+        self.rect = (self.pos_X_L, self.pos_Y_O, self.width, self.length)
         self.color = BLACK
 
 
@@ -179,24 +179,39 @@ def placehouses(numhouses):
 
 
 def replacehouse(house, houses, numhouses, housenumber):
+    # Calculations
     tempposition = house.position
+    print "position house",housenumber, "=", house.position
     tempvalue = calculatevalue(houses, numhouses)
+    totalvalue = calculatevalue(houses, numhouses)
+    print totalvalue, "totalvalue before replacing"
+    for i in range(numhouses):
+        if i == housenumber:
+            continue
+        distance = checkdistance(house, houses[i])
+
+    # Replacing and recalculating
     house.position = house.map.getrandom(house.width, house.length, house.free)
     getcoordinates(house)
-    if calculatevalue(houses, numhouses) < tempvalue:
+    print "position house", housenumber, "=", house.position
+    totalvalue = calculatevalue(houses, numhouses)
+    print totalvalue, "totalvalueafter replacing"
+    for i in range(numhouses):
+        if i == housenumber:
+            continue
+        distance = checkdistance(house, houses[i])
+        if checkoverlap(house, houses[i], distance):
+            house.position = tempposition
+            getcoordinates(house)
+
+    if totalvalue < tempvalue:
         house.position = tempposition
-    else:
-        for i in range(numhouses):
-            if i != housenumber:
-                distance = checkdistance(house, houses[i])
-                if checkoverlap(house, houses[i], distance):
-                    house.position = tempposition
-                    break
-            else:
-                continue
+        getcoordinates(house)
+        print house.position, "bla"
 
     houses[housenumber].position = house.position
-    houses[housenumber].rect = pygame.Rect(house.pos_X_L, house.pos_Y_O, house.width, house.length)
+    getcoordinates(houses[housenumber])
+    houses[housenumber].rect = (house.pos_X_L, house.pos_Y_O, house.width, house.length)
     return houses
 
 def run(numhouses):
@@ -204,16 +219,15 @@ def run(numhouses):
     for i in range(numhouses):
         pygame.draw.rect(screen, houses[i].color, houses[i].rect, 1)
     pygame.display.update()
-    totalvalue = calculatevalue(houses, numhouses)
     for i in range(3):
         screen.fill(WHITE)
-        pygame.time.delay(5000)
+        pygame.time.delay(2000)
         for j in range(numhouses):
             houses = replacehouse(houses[j], houses, numhouses, j)
             getcoordinates(houses[j])
-            totalvalue = calculatevalue(houses, numhouses)
             pygame.draw.rect(screen, houses[j].color, houses[j].rect, 1)
             pygame.display.update()
+        totalvalue = calculatevalue(houses, numhouses)
         print "totavalue in run '#'",i, "= ", totalvalue
 
 
