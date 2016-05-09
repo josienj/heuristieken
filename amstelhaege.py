@@ -5,6 +5,10 @@ import pygame
 pygame.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (204, 0, 0)
+GREEN = (0, 204, 0)
+BLUE = (0, 0, 204)
+PURPLE = (204, 0, 204)
 dflags = pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE
 screen = pygame.display.set_mode((150, 160), dflags)
 screen.fill(WHITE)
@@ -163,17 +167,47 @@ def placehouses(numhouses):
         houses.append(House(8, 8, 2, houses))
         houses[i].basevalue = 285000
         houses[i].perc = 0.03
+        houses[i].color = RED
         i += 1
     while i >= (numhouses * 0.6) and i < (numhouses * 0.85):
         houses.append(House(10, 7.5, 3, houses))
         houses[i].basevalue = 399000
         houses[i].perc = 0.04
+        houses[i].color = GREEN
         i += 1
     while i >= (numhouses * 0.85) and i < numhouses:
         houses.append(House(11, 10.5, 6, houses))
         houses[i].basevalue = 610000
         houses[i].perc = 0.06
+        houses[i].color = PURPLE
         i += 1
+
+        for i in range(numhouses):
+            print numhouses
+            print i
+            for j in range(numhouses):
+                print j
+                if i == j:
+                   continue
+                distance = checkdistance(houses[i], houses[j])
+                if checkoverlap(houses[i], houses[j], distance):
+                    print "There is overlap between house", i, "and house", j
+                    overlap = 1
+                    while overlap == 1:
+                        houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
+                        getcoordinates(houses[i])
+                        count = 0
+                        for k in range(numhouses):
+                            if i == k:
+                                continue
+                            distance = checkdistance(houses[i], houses[k])
+                            if checkoverlap(houses[i], houses[k], distance) == False:
+                                count += 1
+                            if count == numhouses - 1:
+                                overlap = 0
+
+
+
 
     return houses
 
@@ -181,9 +215,8 @@ def placehouses(numhouses):
 def replacehouse(house, houses, numhouses, housenumber):
     # Calculations
     tempposition = house.position
-    print "position house",housenumber, "=", house.position
     tempvalue = calculatevalue(houses, numhouses)
-    totalvalue = calculatevalue(houses, numhouses)
+    totalvalue = tempvalue
     print totalvalue, "totalvalue before replacing"
     for i in range(numhouses):
         if i == housenumber:
@@ -193,7 +226,6 @@ def replacehouse(house, houses, numhouses, housenumber):
     # Replacing and recalculating
     house.position = house.map.getrandom(house.width, house.length, house.free)
     getcoordinates(house)
-    print "position house", housenumber, "=", house.position
     totalvalue = calculatevalue(houses, numhouses)
     print totalvalue, "totalvalueafter replacing"
     for i in range(numhouses):
@@ -207,7 +239,6 @@ def replacehouse(house, houses, numhouses, housenumber):
     if totalvalue < tempvalue:
         house.position = tempposition
         getcoordinates(house)
-        print house.position, "bla"
 
     houses[housenumber].position = house.position
     getcoordinates(houses[housenumber])
@@ -219,10 +250,10 @@ def run(numhouses):
     for i in range(numhouses):
         pygame.draw.rect(screen, houses[i].color, houses[i].rect, 1)
     pygame.display.update()
-    for i in range(3):
-        screen.fill(WHITE)
-        pygame.time.delay(2000)
+    for i in range(50):
         for j in range(numhouses):
+            pygame.draw.rect(screen, WHITE, houses[j].rect, 1)
+            # pygame.time.delay(200)
             houses = replacehouse(houses[j], houses, numhouses, j)
             getcoordinates(houses[j])
             pygame.draw.rect(screen, houses[j].color, houses[j].rect, 1)
