@@ -7,6 +7,10 @@ import time
 
 from Parameters import *
 
+screen = pygame.display.set_mode(((MAP_X * PAR), (MAP_Y * PAR)), dflags)
+screen.fill(GREEN)
+pygame.display.update()
+
 def run(numhouses, runs, TRY):
     screen.fill(GREEN)
     pygame.display.update()
