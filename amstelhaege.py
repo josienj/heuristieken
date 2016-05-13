@@ -1,6 +1,10 @@
 import random
 import math
 import pygame
+import os
+import os.path
+import csv
+import time
 
 # Set parameters and variables for pygame
 pygame.init()
@@ -17,6 +21,10 @@ screen = pygame.display.set_mode((MAP_X, MAP_Y), dflags)
 screen.fill(WHITE)
 pygame.display.update()
 
+
+
+SAVE_PATH_PNG = 'C:\Users\Tom\PycharmProjects\heuristieken\Images'
+SAVE_PATH_CSV = 'C:\Users\Tom\PycharmProjects\heuristieken\CSV'
 
 #####
 # A Class in which the values of the house are first created and stored.
@@ -42,6 +50,13 @@ class House(object):
         self.rect = (self.pos_X_L, self.pos_Y_O, self.width, self.length)
         self.color = BLACK
 
+
+class SimAnn(object):
+    def __init__(self):
+        self.nochange = 0
+        self.firstswap = 1
+        self.besthouses = []
+        self.bestvalue = 0
 
 class Map(object):
     def __init__(self):
@@ -86,7 +101,7 @@ def calculatedistance(houses, numhouses):
 def calculatevalue(houses, numhouses):
     totalvalue = 0
     for i in range(numhouses):
-        min_distance = calculatemin_distance(houses[i], houses, numhouses, i)
+        min_distance = calculatemin_distance(houses[i], houses, numhouses, i) - houses[i].free
         totalvalue += houses[i].basevalue * (1 + (houses[i].perc * min_distance))
 
     return totalvalue
@@ -193,11 +208,9 @@ def placehouses(numhouses):
                continue
             distance = checkdistance(houses[i], houses[j])
             if checkoverlap(houses[i], houses[j], distance):
-                print "There is overlap between house", i, "and house", j
                 for x in range(numhouses):
-                    pygame.draw.rect(screen, houses[x].color, houses[x].rect, 1)
+                    pygame.draw.rect(screen, houses[x].color, houses[x].rect, 0)
                     pygame.display.update()
-                pygame.time.delay(500)
                 overlap = 1
                 while overlap == 1:
                     houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
@@ -207,21 +220,18 @@ def placehouses(numhouses):
                         if i == k:
                             continue
                         distance = checkdistance(houses[i], houses[k])
-                        if checkoverlap(houses[i], houses[k], distance) == False:
+                        if not checkoverlap(houses[i], houses[k], distance):
                             count += 1
                         if count == numhouses - 1:
                             overlap = 0
 
-    print "There is no overlap"
-    pygame.time.delay(500)
-
     return houses
 
 
-def replacehouse(house, houses, numhouses, housenumber):
+def replacehouse(house, houses, numhouses, runs, housenumber, runinfo):
     # Calculations
-    tempposition = house.position
-    tempvalue = calculatevalue(houses, numhouses)
+    oldposition = house.position
+    oldvalue = calculatevalue(houses, numhouses)
 
     # Replacing and recalculating
     house.position = house.map.getrandom(house.width, house.length, house.free)
@@ -243,33 +253,120 @@ def replacehouse(house, houses, numhouses, housenumber):
             if counter == numhouses - 1:
                 break
 
-
+    houses[housenumber].position = house.position
+    getcoordinates(houses[housenumber])
     totalvalue = calculatevalue(houses, numhouses)
-    if totalvalue < tempvalue:
-        house.position = tempposition
+
+    if totalvalue <= oldvalue:
+        house.position = oldposition
         getcoordinates(house)
+        runinfo.nochange += 1
+    else:
+        runinfo.nochange = 0
+
+    if runinfo.nochange == 300:
+        currentvalue = calculatevalue(houses, numhouses)
+        if currentvalue > runinfo.bestvalue or runinfo.firstswap == 1:
+            if runinfo.firstswap == 1:
+                runinfo.firstswap = 0
+            runinfo.besthouses = houses
+            runinfo.bestvalue = calculatevalue(houses, numhouses)
+        else:
+            print "terugswap yeah"
+            time.sleep(1)
+            houses = runinfo.besthouses
+            for i in range(numhouses):
+                getcoordinates(houses[i])
+        houses = simulatedannealing(house, houses, numhouses, runinfo)
+        runinfo.nochange = 0
 
     houses[housenumber].position = house.position
     getcoordinates(houses[housenumber])
     houses[housenumber].rect = (house.pos_X_L, house.pos_Y_O, house.width, house.length)
     return houses
 
-def run(numhouses):
+def simulatedannealing(house, houses, numhouses, runinfo):
+    x = random.randint(0, (numhouses - 1))
+    y = random.randint(0, (numhouses - 1))
+    while houses[x].basevalue == houses[y].basevalue:
+        y = random.randint(0, (numhouses - 1))
+
+    temp = houses[x].position
+    houses[x].position = houses[y].position
+    getcoordinates(houses[x])
+    houses[y].position = temp
+    getcoordinates(houses[y])
+
+    return houses
+
+def save(numhouses, runs, totalvalue, totaldistance, screen):
+    pngcount = 0
+    while os.path.exists("Images\output%s.png" % pngcount):
+        pngcount += 1
+    outputfinal = os.path.join(SAVE_PATH_PNG, 'output'+pngcount.__str__())
+    pygame.image.save(screen, outputfinal+'.png')
+
+    csvcount = 0
+    while os.path.exists("output%s.csv" % csvcount):
+        csvcount += 1
+    outputfinal = os.path.join(SAVE_PATH_CSV, 'output'+csvcount.__str__())
+
+
+    csvstring = ['output'+TRY.__str__(), numhouses, runs, totalvalue, totaldistance]
+
+    with open('total.csv', "a") as writefile:
+        writer = csv.writer(writefile, delimiter=',', quotechar="'", lineterminator = '\n', quoting=csv.QUOTE_ALL)
+        writer.writerow(csvstring)
+
+    writefile.close()
+
+def run(numhouses, runs, TRY):
+    screen.fill(WHITE)
+    pygame.display.update()
+    runinfo = SimAnn()
     houses = placehouses(numhouses)
     for i in range(numhouses):
-        pygame.draw.rect(screen, houses[i].color, houses[i].rect, 1)
+        pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
     pygame.display.update()
-    for i in range(200):
+    for i in range(runs):
         for j in range(numhouses):
-            pygame.draw.rect(screen, WHITE, houses[j].rect, 1)
-            houses = replacehouse(houses[j], houses, numhouses, j)
+            pygame.draw.rect(screen, WHITE, houses[j].rect, 0)
+            houses = replacehouse(houses[j], houses, numhouses, i, j, runinfo)
             getcoordinates(houses[j])
-            pygame.draw.rect(screen, houses[j].color, houses[j].rect, 1)
+            pygame.draw.rect(screen, houses[j].color, houses[j].rect, 0)
             pygame.display.update()
         totalvalue = calculatevalue(houses, numhouses)
-        print "totavalue in run '#'",i, "= ", totalvalue
-    pygame.time.delay(10000)
-    #  = pygame.Surface(screen.get_size())
+        print TRY, "totavalue in run '#'",i, "= ", totalvalue
     pygame.image.save(screen, 'output.png')
+    totalvalue = calculatevalue(houses, numhouses)
+    totaldistance = calculatedistance(houses, numhouses)
+    save(numhouses, runs, totalvalue, totaldistance, screen)
 
-run = run(20)
+
+NUM_TRY20 = 1
+NUM_TRY40 = 0
+NUM_TRY60 = 0
+RUNS20 = 5000
+RUNS40 = 50
+RUNS60 = 50
+NUM_HOUSES20 = 20
+NUM_HOUSES40 = 40
+NUM_HOUSES60 = 60
+MARGIN = 0.995
+
+i = 0
+j = 0
+k = 0
+TRY = 0
+while i < NUM_TRY20:
+    run(NUM_HOUSES20, RUNS20, TRY)
+    i += 1
+    TRY += 1
+while j < NUM_TRY40:
+    run(NUM_HOUSES40, RUNS40, TRY)
+    j += 1
+    TRY += 1
+while k < NUM_TRY60:
+    run(NUM_HOUSES60, RUNS60, TRY)
+    k += 1
+    TRY += 1
