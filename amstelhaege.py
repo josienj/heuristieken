@@ -1,30 +1,35 @@
 import random
 import math
-import pygame
 import os
 import os.path
 import csv
 import time
 
-# Set parameters and variables for pygame
-pygame.init()
-MAP_X = 150
-MAP_Y = 160
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (204, 0, 0)
-GREEN = (0, 204, 0)
-BLUE = (0, 0, 204)
-PURPLE = (204, 0, 204)
-dflags = pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE
-screen = pygame.display.set_mode((MAP_X, MAP_Y), dflags)
-screen.fill(WHITE)
-pygame.display.update()
+from Parameters import *
 
+def run(numhouses, runs, TRY):
+    screen.fill(GREEN)
+    pygame.display.update()
+    runinfo = Info()
+    houses = placehouses(numhouses)
+    for i in range(numhouses):
+        pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
+    pygame.display.update()
+    for i in range(runs):
+        for j in range(numhouses):
+            pygame.draw.rect(screen, GREEN, houses[j].rect, 0)
+            houses = replacehouse(houses[j], houses, numhouses, i, j, runinfo)
+            getcoordinates(houses[j])
+            pygame.draw.rect(screen, houses[j].color, houses[j].rect, 0)
+            pygame.display.update()
+        totalvalue = calculatevalue(houses, numhouses)
+        print TRY, "run '#'",i, "= ", totalvalue
+    pygame.image.save(screen, 'output.png')
+    totalvalue = calculatevalue(houses, numhouses)
+    totaldistance = calculatedistance(houses, numhouses)
+    save(numhouses, runs, totalvalue, totaldistance, screen)
 
-
-SAVE_PATH_PNG = 'C:\Users\Tom\PycharmProjects\heuristieken\Images'
-SAVE_PATH_CSV = 'C:\Users\Tom\PycharmProjects\heuristieken\CSV'
+#### T = c / log(1+iteraties)
 
 #####
 # A Class in which the values of the house are first created and stored.
@@ -47,11 +52,11 @@ class House(object):
                 while checkoverlap(self, houses[i], checkdistance(self, houses[i])) != False:
                     self.position = self.map.getrandom(self.width, self.length, self.free)
                     getcoordinates(self)
-        self.rect = (self.pos_X_L, self.pos_Y_O, self.width, self.length)
-        self.color = BLACK
+        self.rect = ((self.pos_X_L * PAR), (self.pos_Y_O * PAR), (self.width * PAR), (self.length * PAR))
+        self.color = WHITE
 
 
-class SimAnn(object):
+class Info(object):
     def __init__(self):
         self.nochange = 0
         self.firstswap = 1
@@ -193,13 +198,13 @@ def placehouses(numhouses):
         houses.append(House(10, 7.5, 3, houses))
         houses[i].basevalue = 399000
         houses[i].perc = 0.04
-        houses[i].color = GREEN
+        houses[i].color = INDIAN
         i += 1
     while i >= (numhouses * 0.85) and i < numhouses:
         houses.append(House(11, 10.5, 6, houses))
         houses[i].basevalue = 610000
         houses[i].perc = 0.06
-        houses[i].color = PURPLE
+        houses[i].color = MAROON
         i += 1
 
     for i in range(numhouses):
@@ -282,7 +287,8 @@ def replacehouse(house, houses, numhouses, runs, housenumber, runinfo):
 
     houses[housenumber].position = house.position
     getcoordinates(houses[housenumber])
-    houses[housenumber].rect = (house.pos_X_L, house.pos_Y_O, house.width, house.length)
+    houses[housenumber].rect = ((house.pos_X_L * PAR), (house.pos_Y_O * PAR),
+                                (house.width * PAR), (house.length * PAR))
     return houses
 
 def simulatedannealing(house, houses, numhouses, runinfo):
@@ -320,39 +326,6 @@ def save(numhouses, runs, totalvalue, totaldistance, screen):
 
     writefile.close()
 
-def run(numhouses, runs, TRY):
-    screen.fill(WHITE)
-    pygame.display.update()
-    runinfo = SimAnn()
-    houses = placehouses(numhouses)
-    for i in range(numhouses):
-        pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
-    pygame.display.update()
-    for i in range(runs):
-        for j in range(numhouses):
-            pygame.draw.rect(screen, WHITE, houses[j].rect, 0)
-            houses = replacehouse(houses[j], houses, numhouses, i, j, runinfo)
-            getcoordinates(houses[j])
-            pygame.draw.rect(screen, houses[j].color, houses[j].rect, 0)
-            pygame.display.update()
-        totalvalue = calculatevalue(houses, numhouses)
-        print TRY, "totavalue in run '#'",i, "= ", totalvalue
-    pygame.image.save(screen, 'output.png')
-    totalvalue = calculatevalue(houses, numhouses)
-    totaldistance = calculatedistance(houses, numhouses)
-    save(numhouses, runs, totalvalue, totaldistance, screen)
-
-
-NUM_TRY20 = 1
-NUM_TRY40 = 0
-NUM_TRY60 = 0
-RUNS20 = 5000
-RUNS40 = 50
-RUNS60 = 50
-NUM_HOUSES20 = 20
-NUM_HOUSES40 = 40
-NUM_HOUSES60 = 60
-MARGIN = 0.995
 
 i = 0
 j = 0
