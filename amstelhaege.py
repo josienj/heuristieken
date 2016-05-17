@@ -2,6 +2,9 @@ import math
 import os
 import os.path
 import csv
+import time
+import random
+import time
 
 from Parameters import *
 # T = c / log(1+iteraties)
@@ -11,9 +14,8 @@ def run(numhouses, numwaters, runs, attempts):
     screen.fill(GREEN)
     pygame.display.update()
     mapwater = Map()
-    print "NUMWATER =", NUM_WATER
-    waters = placewater(numwaters, mapwater)
-    houses = placehouses(numhouses)
+    waters = placewater(numwaters, mapwater, screen)
+    houses = placehouses(numhouses, numwaters, waters)
     for i in range(numwaters):
         pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
     pygame.display.update()
@@ -33,6 +35,12 @@ def run(numhouses, numwaters, runs, attempts):
             pygame.display.update()
         totalvalue = calculatevalue(houses, numhouses)
         print attempts, "totavalue in run '#'", j, "= ", totalvalue
+    screen.fill(GREEN)
+    for i in range(numwaters):
+        pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
+    for i in range(numhouses):
+        pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
+    pygame.display.update()
     pygame.image.save(screen, 'output.png')
     totalvalue = calculatevalue(houses, numhouses)
     totaldistance = calculatedistance(houses, numhouses)
@@ -58,12 +66,6 @@ class House(object):
         self.pos_y_l = 0
         self.pos_y_u = 0
         getcoordinates(self)
-        currenthouses = len(houses)
-        if currenthouses != 0:
-            for i in range(currenthouses):
-                while checkoverlap(self, houses[i], checkdistance(self, houses[i])):
-                    self.position = self.map.getrandom(self.width, self.length, self.free)
-                    getcoordinates(self)
         self.rect = (self.pos_x_l * PAR, self.pos_y_l * PAR,
                      self.width * PAR, self.length * PAR)
         self.color = GREEN
@@ -71,31 +73,20 @@ class House(object):
 
 class Water(object):
     def __init__(self, mapwater):
-        self.surface = 0
-        if mapwater.waterbodies == 0:
-            print "totalwater of map =", mapwater.totalwater
-            print "remainingsurface of map =", mapwater.remainingsurface
         if mapwater.waterbodies < (NUM_WATER - 1):
             self.surface = random.uniform(0, mapwater.remainingsurface)
         else:
             self.surface = mapwater.remainingsurface
-        print "surface =", self.surface
         mapwater.remainingsurface -= self.surface
-        print "remainingsurface =", mapwater.remainingsurface
         mapwater.waterbodies += 1
-        print "waterbodies =", mapwater.waterbodies
         rand = random.randint(0, 1)
-        print "random =", rand
         if rand == 0:
             self.width = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
             self.length = self.surface / self.width
         if rand == 1:
             self.length = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
             self.width = self.surface / self.length
-        print "length =", self.length
-        print "width =", self.width
         self.position = mapwater.getrandom(self.width, self.length, 0)
-        print "position =", self.position
         self.pos_x_l = 0
         self.pos_x_r = 0
         self.pos_y_l = 0
@@ -166,6 +157,13 @@ def checkoverlap(house, checkedhouse, distance):
         return False
 
 
+def checkoverlapwater(house, water, numwaters):
+    if checkdistance(house, water) < 0:
+            return True
+
+    return False
+
+
 def checkdistance(house, housechecked):
     x1l = house.pos_x_l
     x1r = house.pos_x_r
@@ -184,7 +182,7 @@ def checkdistance(house, housechecked):
         distance = 0
 
     # If house and house[i] overlap on x-axis
-    elif x2l < x1l < x2r or x2l > x1l and x2l < x1r:
+    elif x2l < x1l < x2r or x2l > x1l and x1r > x2l:
         # If house is lower than house[i]
         if y1l < y2l:
             distance = y2l - y1u
@@ -193,7 +191,7 @@ def checkdistance(house, housechecked):
             distance = y1l - y2u
 
     # If house and house[i] overlap on y-axis
-    elif y2l < y1l < y2u or y2l > y1l and y2l < y1u:
+    elif y2l < y1l < y2u or y2l > y1l and y1u > y2l:
         # If house is lower than house[i]
         if x1l > x2l:
             distance = x1l - x2r
@@ -202,7 +200,7 @@ def checkdistance(house, housechecked):
             distance = x2l - x1r
 
     # If house is left of house[i]
-    elif x2l > x1l and x2l >= x1r:
+    elif x2l > x1l and x1r <= x2l:
         # If house is lower than house[i]
         if y2l > y1l:
             dy = y2l - y1u
@@ -242,7 +240,7 @@ def getcoordinateswater(water):
     water.pos_y_u = water.position[1] + water.length
 
 
-def placehouses(numhouses):
+def placehouses(numhouses, numwaters, waters):
     houses = []
     i = 0
 
@@ -264,6 +262,10 @@ def placehouses(numhouses):
         houses[i].perc = 0.06
         houses[i].color = MAROON
         i += 1
+
+    for x in range(numhouses):
+        pygame.draw.rect(screen, houses[x].color, houses[x].rect, 0)
+    pygame.display.update()
 
     for i in range(numhouses):
         for j in range(numhouses):
@@ -291,13 +293,40 @@ def placehouses(numhouses):
     return houses
 
 
-def placewater(numwater, mapwater):
+def placewater(numwater, mapwater, screen):
     waters = []
     i = numwater
     while i > 0:
         waters.append(Water(mapwater))
         i -= 1
 
+    for i in range(numwater):
+        for j in range(numwater):
+            if i == j:
+                continue
+            overlap = 0
+            for k in range(numwater):
+                if checkoverlapwater(waters[i], waters[k], numwater):
+                    overlap = 1
+            while overlap == 1:
+                waters[i].position = mapwater.getrandom(
+                    waters[i].width, waters[i].length, 0)
+                getcoordinates(waters[i])
+                waters[i].rect = (waters[i].pos_x_l * PAR, waters[i].pos_y_l * PAR,
+                                  waters[i].width * PAR, waters[i].length * PAR)
+                count = 0
+                for l in range(numwater):
+                    if i == l:
+                        continue
+                    if not checkoverlapwater(waters[i], waters[l], numwater):
+                        count += 1
+                    if count == numwater - 1:
+                        overlap = 0
+
+    screen.fill(GREEN)
+    for i in range(numwater):
+        pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
+    pygame.display.update()
     return waters
 
 
@@ -354,14 +383,13 @@ def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, 
     csvcount = 0
     while os.path.exists("CSV\output%s.csv" % csvcount):
         csvcount += 1
-    print csvcount
     # Print details of outcome of run in csv file
     with open("CSV\output%s.csv" % csvcount, 'wb') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar="'", quoting=csv.QUOTE_ALL)
         writer.writerow(["numhouses", "runs", "totalvalue", "totaldistance"])
         writer.writerow([numhouses, runs, totalvalue, totaldistance])
         writer.writerow(["\n"])
-        writer.writerow(["water", "position", "width", "length", "free"])
+        writer.writerow(["water", "position", "width", "length"])
         for i in range(numwaters):
             writer.writerow(["water" + i.__str__(), waters[i].position, waters[i].width, waters[i].length])
         writer.writerow(["\n"])
@@ -375,7 +403,7 @@ def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, 
     with open('total.csv', "a") as writefile:
         writer = csv.writer(writefile, delimiter=',', quotechar="'", lineterminator='\n', quoting=csv.QUOTE_ALL)
         writer.writerow([numhouses, numwaters, runs, totalvalue, totaldistance, "output%s.csv" % csvcount,
-                         "Images\output%s.png" % pngcount])
+                         "output%s.png" % pngcount])
     writefile.close()
 
 
@@ -384,14 +412,17 @@ j = 0
 k = 0
 TRY = 0
 while i < NUM_TRY20:
+    NUM_WATER = random.randint(1, 4)
     run(NUM_HOUSES20, NUM_WATER, RUNS20, TRY)
     i += 1
     TRY += 1
 while j < NUM_TRY40:
+    NUM_WATER = random.randint(1, 4)
     run(NUM_HOUSES40, NUM_WATER, RUNS40, TRY)
     j += 1
     TRY += 1
 while k < NUM_TRY60:
+    NUM_WATER = random.randint(1, 4)
     run(NUM_HOUSES60, NUM_WATER, RUNS60, TRY)
     k += 1
     TRY += 1
