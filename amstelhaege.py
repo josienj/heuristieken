@@ -263,10 +263,6 @@ def placehouses(numhouses, numwaters, waters):
         houses[i].color = MAROON
         i += 1
 
-    for x in range(numhouses):
-        pygame.draw.rect(screen, houses[x].color, houses[x].rect, 0)
-    pygame.display.update()
-
     for i in range(numhouses):
         for j in range(numhouses):
             if i == j:
