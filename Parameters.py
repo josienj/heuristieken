@@ -1,17 +1,21 @@
 import pygame
+import time
 
 # Paramters for map
-NUM_TRY20 = 5
+NUM_TRY20 = 1
 NUM_TRY40 = 0
 NUM_TRY60 = 0
-RUNS20 = 100
+RUNS20 = 1000
 RUNS40 = 100
-RUNS60 = 100
+RUNS60 = 1000
 
 NUM_HOUSES20 = 20
 NUM_HOUSES40 = 40
 NUM_HOUSES60 = 60
 MARGIN = 0.995
+
+B3 = 11
+L3 = 10.5
 
 # Parameters for saving data
 SAVE_PATH_PNG = 'C:\Users\Tom\PycharmProjects\heuristieken\Images'

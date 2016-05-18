@@ -2,9 +2,7 @@ import math
 import os
 import os.path
 import csv
-import time
 import random
-import time
 
 from Parameters import *
 # T = c / log(1+iteraties)
@@ -15,7 +13,12 @@ def run(numhouses, numwaters, runs, attempts):
     pygame.display.update()
     mapwater = Map()
     waters = placewater(numwaters, mapwater, screen)
-    houses = placehouses(numhouses, numwaters, waters)
+    houses = placehouses(numhouses, waters)
+    for i in range(numhouses):
+        if checkoverlap(houses[i], waters, i, False, False):
+            houses = placehouses(numhouses, waters)
+        else:
+            continue
     for i in range(numwaters):
         pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
     pygame.display.update()
@@ -27,7 +30,7 @@ def run(numhouses, numwaters, runs, attempts):
             pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
         for k in range(numhouses):
             pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
-            houses = replacehouse(houses[k], houses, numhouses, k)
+            houses = replacehouse(houses[k], houses, numhouses, k, waters)
             getcoordinates(houses[k])
             houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
                               houses[k].width * PAR, houses[k].length * PAR)
@@ -53,7 +56,7 @@ def run(numhouses, numwaters, runs, attempts):
 # These values are added seperately, later in placeHouses.
 #####
 class House(object):
-    def __init__(self, width, length, free, houses):
+    def __init__(self, width, length, free):
         self.basevalue = 0
         self.perc = 0.00
         self.width = width
@@ -79,6 +82,7 @@ class Water(object):
             self.surface = mapwater.remainingsurface
         mapwater.remainingsurface -= self.surface
         mapwater.waterbodies += 1
+        self.free = 0
         rand = random.randint(0, 1)
         if rand == 0:
             self.width = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
@@ -105,6 +109,8 @@ class Map(object):
         self.totalwater = (MAP_X * MAP_Y) * 0.2
         self.waterbodies = 0
         self.remainingsurface = self.totalwater
+
+        self.cursor = 0, 0
 
     def getrandom(self, width, length, free):
         x = random.uniform((0 + free), (self.x_axis - (width + free)))
@@ -150,18 +156,27 @@ def calculatevalue(houses, numhouses):
     return totalvalue
 
 
-def checkoverlap(house, checkedhouse, distance):
-    if distance < house.free or distance < checkedhouse.free:
-        return True
-    else:
-        return False
-
-
-def checkoverlapwater(house, water, numwaters):
-    if checkdistance(house, water) < 0:
+def checkoverlap(house, houses, housenumber, checkwithself, prints):
+    counter = 0
+    for i in range(len(houses)):
+        if checkwithself:
+            if i == housenumber:
+                continue
+        distance = checkdistance(house, houses[i])
+        if prints:
+            print distance
+            print "water", housenumber, "=", house.pos_x_l, house.pos_x_r, house.pos_y_u, house.pos_y_l
+            print "waterchecked", i, "=", houses[i].pos_x_l, houses[i].pos_x_r, houses[i].pos_y_u, houses[i].pos_y_l
+        if distance < house.free or distance < houses[i].free:
+            if prints:
+                print "distance < 0"
             return True
-
-    return False
+        else:
+            if prints:
+                print "counter =", counter
+            counter += 1
+        if counter == len(houses) - 1:
+            return False
 
 
 def checkdistance(house, housechecked):
@@ -240,51 +255,63 @@ def getcoordinateswater(water):
     water.pos_y_u = water.position[1] + water.length
 
 
-def placehouses(numhouses, numwaters, waters):
+def placehouses(numhouses, waters):
     houses = []
     i = 0
 
-    while i < (numhouses * 0.6):
-        houses.append(House(8, 8, 2, houses))
-        houses[i].basevalue = 285000
-        houses[i].perc = 0.03
-        houses[i].color = RED
-        i += 1
-    while (numhouses * 0.6) <= i < (numhouses * 0.85):
-        houses.append(House(10, 7.5, 3, houses))
-        houses[i].basevalue = 399000
-        houses[i].perc = 0.04
-        houses[i].color = INDIAN
-        i += 1
-    while (numhouses * 0.85) <= i < numhouses:
-        houses.append(House(11, 10.5, 6, houses))
+    while i < (numhouses * 0.15):
+        houses.append(House(B3, L3, 6))
         houses[i].basevalue = 610000
         houses[i].perc = 0.06
         houses[i].color = MAROON
         i += 1
+        print i
+    while (numhouses * 0.15) <= i < (numhouses * 0.4):
+        houses.append(House(10, 7.5, 3))
+        houses[i].basevalue = 399000
+        houses[i].perc = 0.04
+        houses[i].color = INDIAN
+        i += 1
+        print i
+    while (numhouses * 0.4) <= i < numhouses:
+        houses.append(House(8, 8, 2))
+        houses[i].basevalue = 285000
+        houses[i].perc = 0.03
+        houses[i].color = RED
+        i += 1
+        print i
+
+    for k in range(numhouses):
+        pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
+        getcoordinates(houses[k])
+        houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
+                          houses[k].width * PAR, houses[k].length * PAR)
+        pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
+        pygame.display.update()
 
     for i in range(numhouses):
-        for j in range(numhouses):
-            if i == j:
-                continue
-            distance = checkdistance(houses[i], houses[j])
-            if checkoverlap(houses[i], houses[j], distance):
-                for x in range(numhouses):
-                    pygame.draw.rect(screen, houses[x].color, houses[x].rect, 0)
-                    pygame.display.update()
-                overlap = 1
-                while overlap == 1:
-                    houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
-                    getcoordinates(houses[i])
-                    count = 0
-                    for k in range(numhouses):
-                        if i == k:
-                            continue
-                        distance = checkdistance(houses[i], houses[k])
-                        if not checkoverlap(houses[i], houses[k], distance):
-                            count += 1
-                        if count == numhouses - 1:
-                            overlap = 0
+        for k in range(numhouses):
+            pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
+            getcoordinates(houses[k])
+            houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
+                              houses[k].width * PAR, houses[k].length * PAR)
+            pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
+            pygame.display.update()
+            print i
+            while True:
+                houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
+                getcoordinates(houses[i])
+                if not checkoverlap(houses[i], houses, i, True, False):
+                    if not checkoverlap(houses[i], waters, i, False, False):
+                        break
+
+    for k in range(numhouses):
+        pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
+        getcoordinates(houses[k])
+        houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
+                          houses[k].width * PAR, houses[k].length * PAR)
+        pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
+        pygame.display.update()
 
     return houses
 
@@ -297,71 +324,49 @@ def placewater(numwater, mapwater, screen):
         i -= 1
 
     for i in range(numwater):
-        for j in range(numwater):
-            if i == j:
-                continue
-            overlap = 0
-            for k in range(numwater):
-                if checkoverlapwater(waters[i], waters[k], numwater):
-                    overlap = 1
-            while overlap == 1:
-                waters[i].position = mapwater.getrandom(
-                    waters[i].width, waters[i].length, 0)
+        pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
+    pygame.display.update()
+
+    for i in range(numwater):
+        while True:
+            if checkoverlap(waters[i], waters, i, True, False):
+                waters[i].position = mapwater.getrandom(waters[i].width, waters[i].length, 0)
                 getcoordinates(waters[i])
-                waters[i].rect = (waters[i].pos_x_l * PAR, waters[i].pos_y_l * PAR,
-                                  waters[i].width * PAR, waters[i].length * PAR)
-                count = 0
-                for l in range(numwater):
-                    if i == l:
-                        continue
-                    if not checkoverlapwater(waters[i], waters[l], numwater):
-                        count += 1
-                    if count == numwater - 1:
-                        overlap = 0
+                waters[i].rect = ((waters[i].pos_x_l * PAR), (waters[i].pos_y_l * PAR), (
+                    waters[i].width * PAR), (waters[i].length * PAR))
+                screen.fill(GREEN)
+            else:
+                break
 
     screen.fill(GREEN)
     for i in range(numwater):
         pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
     pygame.display.update()
+
     return waters
 
 
-def replacehouse(house, houses, numhouses, housenumber):
+def replacehouse(house, houses, numhouses, housenumber, waters):
     # Calculations
     oldposition = house.position
     oldvalue = calculatevalue(houses, numhouses)
 
     # Replacing and recalculating
-    house.position = house.map.getrandom(house.width, house.length, house.free)
-    getcoordinates(house)
-    for i in range(numhouses):
-        if i == housenumber:
-            continue
-        while True:
-            counter = 0
-            for j in range(numhouses):
-                if j == housenumber:
-                    continue
-                if checkoverlap(house, houses[j], checkdistance(house, houses[j])):
-                    house.position = house.map.getrandom(house.width, house.length, house.free)
+    while True:
+        house.position = house.map.getrandom(house.width, house.length, 0)
+        getcoordinates(house)
+        house.rect = (house.pos_x_l * PAR, house.pos_y_l * PAR, house.width * PAR, house.length * PAR)
+        if not checkoverlap(house, houses, housenumber, True, False):
+            if not checkoverlap(house, waters, housenumber, False, False):
+                houses[housenumber].position = house.position
+                totalvalue = calculatevalue(houses, numhouses)
+                if totalvalue <= oldvalue:
+                    houses[housenumber].position = oldposition
                     getcoordinates(house)
-                    break
-                else:
-                    counter += 1
-            if counter == numhouses - 1:
+                houses[housenumber].rect = (
+                    house.pos_x_l * PAR, house.pos_y_l * PAR, house.width * PAR, house.length * PAR)
                 break
 
-    houses[housenumber].position = house.position
-    getcoordinates(houses[housenumber])
-    totalvalue = calculatevalue(houses, numhouses)
-
-    if totalvalue <= oldvalue:
-        house.position = oldposition
-        getcoordinates(house)
-
-    houses[housenumber].position = house.position
-    getcoordinates(houses[housenumber])
-    houses[housenumber].rect = (house.pos_x_l, house.pos_y_l, house.width, house.length)
     return houses
 
 
