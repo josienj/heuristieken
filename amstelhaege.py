@@ -9,6 +9,9 @@ from Parameters import *
 
 
 def run(numhouses, numwaters, runs, attempts):
+    csvrun = 0
+    while os.path.exists("CSVRUN\output%s.png" % csvrun):
+        csvrun += 1
     screen.fill(GREEN)
     pygame.display.update()
     mapwater = Map()
@@ -25,19 +28,24 @@ def run(numhouses, numwaters, runs, attempts):
     for i in range(numhouses):
         pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
     pygame.display.update()
-    for j in range(runs):
-        for i in range(numwaters):
-            pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
-        for k in range(numhouses):
-            pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
-            houses = replacehouse(houses[k], houses, numhouses, k, waters)
-            getcoordinates(houses[k])
-            houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
-                              houses[k].width * PAR, houses[k].length * PAR)
-            pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
-            pygame.display.update()
-        totalvalue = calculatevalue(houses, numhouses)
-        print attempts, "totavalue in run '#'", j, "= ", totalvalue
+    with open('CSVRUN\output%s.csv' % csvrun, "wb") as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar="'", lineterminator='\n', quoting=csv.QUOTE_ALL)
+        writer.writerow(["runs", "totalvalue"])
+        for j in range(runs):
+            for i in range(numwaters):
+                pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
+            for k in range(numhouses):
+                pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
+                houses = replacehouse(houses[k], houses, numhouses, k, waters)
+                getcoordinates(houses[k])
+                houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
+                                  houses[k].width * PAR, houses[k].length * PAR)
+                pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
+                pygame.display.update()
+            totalvalue = calculatevalue(houses, numhouses)
+            writer.writerow(["run %s" % j, totalvalue])
+            print attempts, "totavalue in run '#'", j, "= ", totalvalue
+    csvfile.close()
     screen.fill(GREEN)
     for i in range(numwaters):
         pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)

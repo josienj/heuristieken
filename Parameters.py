@@ -2,10 +2,10 @@ import pygame
 import time
 
 # Paramters for map
-NUM_TRY20 = 20
+NUM_TRY20 = 1
 NUM_TRY40 = 0
-NUM_TRY60 = 1
-RUNS20 = 1000
+NUM_TRY60 = 0
+RUNS20 = 10
 RUNS40 = 100
 RUNS60 = 5000
 
