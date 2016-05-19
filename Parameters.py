@@ -2,12 +2,12 @@ import pygame
 import time
 
 # Paramters for map
-NUM_TRY20 = 1
+NUM_TRY20 = 20
 NUM_TRY40 = 0
-NUM_TRY60 = 0
+NUM_TRY60 = 1
 RUNS20 = 1000
 RUNS40 = 100
-RUNS60 = 1000
+RUNS60 = 5000
 
 NUM_HOUSES20 = 20
 NUM_HOUSES40 = 40
