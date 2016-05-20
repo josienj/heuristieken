@@ -5,20 +5,20 @@ import csv
 import random
 
 from Parameters import *
-# T = c / log(1+iteraties)
 
 
 def run(numhouses, numwaters, runs, attempts):
+    start = time.time()
     csvrun = 0
-    while os.path.exists("CSVRUN\output%s.png" % csvrun):
+    while os.path.exists("CSVRUN\outputrun%s.csv" % csvrun):
         csvrun += 1
     screen.fill(GREEN)
     pygame.display.update()
-    mapwater = Map()
-    waters = placewater(numwaters, mapwater, screen)
+    mapinfo = Map()
+    waters = placewater(numwaters, mapinfo, screen)
     houses = placehouses(numhouses, waters)
     for i in range(numhouses):
-        if checkoverlap(houses[i], waters, i, False, False):
+        if checkoverlap(houses[i], waters, i, False):
             houses = placehouses(numhouses, waters)
         else:
             continue
@@ -28,15 +28,16 @@ def run(numhouses, numwaters, runs, attempts):
     for i in range(numhouses):
         pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
     pygame.display.update()
-    with open('CSVRUN\output%s.csv' % csvrun, "wb") as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar="'", lineterminator='\n', quoting=csv.QUOTE_ALL)
+    with open('CSVRUN\outputrun%s.csv' % csvrun, "wb") as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
         writer.writerow(["runs", "totalvalue"])
         for j in range(runs):
+            mapinfo.runs = j
             for i in range(numwaters):
                 pygame.draw.rect(screen, waters[i].color, waters[i].rect, 0)
             for k in range(numhouses):
                 pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
-                houses = replacehouse(houses[k], houses, numhouses, k, waters)
+                houses = replacehouse(houses[k], houses, numhouses, k, waters, mapinfo, runs)
                 getcoordinates(houses[k])
                 houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
                                   houses[k].width * PAR, houses[k].length * PAR)
@@ -44,7 +45,7 @@ def run(numhouses, numwaters, runs, attempts):
                 pygame.display.update()
             totalvalue = calculatevalue(houses, numhouses)
             writer.writerow(["run %s" % j, totalvalue])
-            print attempts, "totavalue in run '#'", j, "= ", totalvalue
+            print attempts, "run'#'", j, "= ", totalvalue, mapinfo.nochange
     csvfile.close()
     screen.fill(GREEN)
     for i in range(numwaters):
@@ -52,9 +53,12 @@ def run(numhouses, numwaters, runs, attempts):
     for i in range(numhouses):
         pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
     pygame.display.update()
+    mapinfo.runs += 1
     totalvalue = calculatevalue(houses, numhouses)
     totaldistance = calculatedistance(houses, numhouses)
-    save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen)
+    end = time.time()
+    totaltime = end - start
+    save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen, csvrun, totaltime)
 
 
 #####
@@ -112,12 +116,16 @@ class Map(object):
     def __init__(self):
         self.x_axis = MAP_X
         self.y_axis = MAP_Y
+        self.runs = 0
 
         self.totalwater = (MAP_X * MAP_Y) * 0.2
         self.waterbodies = 0
         self.remainingsurface = self.totalwater
 
-        self.cursor = 0, 0
+        self.temperature = 0.80
+        self.nochange = 0
+        self.besthouses = []
+        self.bestvalue = 0
 
     def getrandom(self, width, length, free):
         x = random.uniform((0 + free), (self.x_axis - (width + free)))
@@ -163,7 +171,7 @@ def calculatevalue(houses, numhouses):
     return totalvalue
 
 
-def checkoverlap(house, houses, housenumber, checkwithself, prints):
+def checkoverlap(house, houses, housenumber, checkwithself):
     counter = 0
     for i in range(len(houses)):
         if checkwithself:
@@ -180,6 +188,7 @@ def checkoverlap(house, houses, housenumber, checkwithself, prints):
         else:
             if counter == len(houses):
                 return False
+
 
 def checkdistance(house, housechecked):
     x1l = house.pos_x_l
@@ -291,11 +300,7 @@ def placehouses(numhouses, waters):
         pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
         pygame.display.update()
 
-    for y in range(len(waters)):
-        print "water", y, "=", waters[y].position
-
     for i in range(numhouses):
-        print "houses", i, "=", houses[i].position
         for k in range(numhouses):
             pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
             getcoordinates(houses[k])
@@ -303,31 +308,20 @@ def placehouses(numhouses, waters):
                               houses[k].width * PAR, houses[k].length * PAR)
             pygame.draw.rect(screen, houses[k].color, houses[k].rect, 0)
             pygame.display.update()
-        # time.sleep(1)
         while True:
-            if not checkoverlap(houses[i], houses, i, True, False):
-                print "house", i, "has no overlap with houses"
-                # time.sleep(1)
-                if not checkoverlap(houses[i], waters, i, False, False):
-                    print "house", i, "no overlap with water"
-                    # time.sleep(1)
+            if not checkoverlap(houses[i], houses, i, True):
+                if not checkoverlap(houses[i], waters, i, False):
                     break
                 else:
-                    print "house", i, "overlap with water"
                     houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
                     getcoordinates(houses[i])
                     pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
                     pygame.display.update()
-                    print "new position house", i, "=", houses[i].position
-                    # time.sleep(1)
             else:
-                print "house", i, "overlap with houses"
                 houses[i].position = houses[i].map.getrandom(houses[i].width, houses[i].length, houses[i].free)
                 getcoordinates(houses[i])
                 pygame.draw.rect(screen, houses[i].color, houses[i].rect, 0)
                 pygame.display.update()
-                print "new position house", i, "=", houses[i].position
-                # time.sleep(1)
 
     for k in range(numhouses):
         pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
@@ -353,7 +347,7 @@ def placewater(numwater, mapwater, screen):
 
     for i in range(numwater):
         while True:
-            if checkoverlap(waters[i], waters, i, True, False):
+            if checkoverlap(waters[i], waters, i, True):
                 waters[i].position = mapwater.getrandom(waters[i].width, waters[i].length, 0)
                 getcoordinates(waters[i])
                 waters[i].rect = ((waters[i].pos_x_l * PAR), (waters[i].pos_y_l * PAR), (
@@ -370,7 +364,7 @@ def placewater(numwater, mapwater, screen):
     return waters
 
 
-def replacehouse(house, houses, numhouses, housenumber, waters):
+def replacehouse(house, houses, numhouses, housenumber, waters, mapinfo, runs):
     # Calculations
     oldposition = house.position
     oldvalue = calculatevalue(houses, numhouses)
@@ -380,13 +374,22 @@ def replacehouse(house, houses, numhouses, housenumber, waters):
         house.position = house.map.getrandom(house.width, house.length, 0)
         getcoordinates(house)
         house.rect = (house.pos_x_l * PAR, house.pos_y_l * PAR, house.width * PAR, house.length * PAR)
-        if not checkoverlap(house, houses, housenumber, True, False):
-            if not checkoverlap(house, waters, housenumber, False, False):
+        if not checkoverlap(house, houses, housenumber, True):
+            if not checkoverlap(house, waters, housenumber, False):
                 houses[housenumber].position = house.position
                 totalvalue = calculatevalue(houses, numhouses)
                 if totalvalue <= oldvalue:
-                    houses[housenumber].position = oldposition
-                    getcoordinates(house)
+                    if simannealing(totalvalue, oldvalue, mapinfo):
+                        mapinfo.nochange = 0
+                    else:
+                        houses[housenumber].position = oldposition
+                        getcoordinates(house)
+                        mapinfo.nochange += 1
+                else:
+                    mapinfo.nochange = 0
+
+                totalvalue = calculatevalue(houses, numhouses)
+                reannealing(mapinfo, houses, runs, totalvalue)
                 houses[housenumber].rect = (
                     house.pos_x_l * PAR, house.pos_y_l * PAR, house.width * PAR, house.length * PAR)
                 break
@@ -394,7 +397,32 @@ def replacehouse(house, houses, numhouses, housenumber, waters):
     return houses
 
 
-def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen):
+def simannealing(totalvalue, oldvalue, mapinfo):
+    acceptance = math.exp(-((totalvalue / oldvalue) / mapinfo.temperature))
+    mapinfo.temperature *= 0.995
+    rand = random.uniform(0, 1)
+    if acceptance > rand:
+        print acceptance, random, "WORSE STEP SET"
+        return True
+    else:
+        return False
+
+
+def reannealing(mapinfo, houses, runs, totalvalue):
+    if mapinfo.nochange == 500 or mapinfo.runs == runs:
+        print "REANNEAL ENTERED"
+        if mapinfo.bestvalue > totalvalue:
+            houses = mapinfo.besthouses
+            totalvalue = mapinfo.bestvalue
+            print "HOUSES SET BACK"
+        mapinfo.besthouses = houses
+        mapinfo.bestvalue = totalvalue
+        mapinfo.temperature = 0.20
+        print "TEMPERATURE =", mapinfo.temperature
+        mapinfo.nochange = 0
+
+
+def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen, csvrun, totaltime):
 
     # Finds existing csv files and assures no file is overwritten
     pngcount = 0
@@ -410,7 +438,7 @@ def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, 
         csvcount += 1
     # Print details of outcome of run in csv file
     with open("CSV\output%s.csv" % csvcount, 'wb') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar="'", quoting=csv.QUOTE_ALL)
+        writer = csv.writer(csvfile, delimiter=',')
         writer.writerow(["numhouses", "runs", "totalvalue", "totaldistance"])
         writer.writerow([numhouses, runs, totalvalue, totaldistance])
         writer.writerow(["\n"])
@@ -426,11 +454,10 @@ def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, 
 
     # Print results of run in total.csv
     with open('total.csv', "a") as writefile:
-        writer = csv.writer(writefile, delimiter=',', quotechar="'", lineterminator='\n', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(writefile, delimiter=',', lineterminator='\n')
         writer.writerow([numhouses, numwaters, runs, totalvalue, totaldistance, "output%s.csv" % csvcount,
-                         "output%s.png" % pngcount])
+                         "outputrun%s.csv" % csvrun, "output%s.png" % pngcount, totaltime])
     writefile.close()
-
 
 i = 0
 j = 0
