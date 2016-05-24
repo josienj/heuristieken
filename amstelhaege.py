@@ -18,8 +18,6 @@ from Parameters import *
 #####
 def run(numhouses, numwaters, runs, attempts):
 
-    print attempts
-
     # Start the timer by saving the current time to start
     start = time.time()
 
