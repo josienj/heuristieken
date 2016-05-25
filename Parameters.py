@@ -2,18 +2,22 @@ import pygame
 
 
 # Parameters for tries.
-NUM_TRY20 = 0
+NUM_TRY20 = 500
 NUM_TRY40 = 0
-NUM_TRY60 = 985
+NUM_TRY60 = 10
 # Paramters for runs.
 RUNS20 = 5000
 RUNS40 = 3500
-RUNS60 = 0
+RUNS60 = 1000
 
 # Parameters for number of houses.
 NUM_HOUSES20 = 20
 NUM_HOUSES40 = 40
 NUM_HOUSES60 = 60
+
+# If CHECKED is true, hillclimber is used to increase total value of the map.
+# If CHECKED is false, hillclimber is used to increase total distance of the map.
+CHECKED = False
 
 # Parameters for saving data
 SAVE_PATH_PNG = 'C:\Users\Tom\PycharmProjects\heuristieken\Images'

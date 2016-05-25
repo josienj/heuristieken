@@ -16,7 +16,7 @@ from Parameters import *
 # When everything is placed correctly, it will try to replace houses to increase the maps value.
 # While and after running it will save important information to new files.
 #####
-def run(numhouses, numwaters, runs, attempts):
+def run(numhouses, numwaters, runs, attempts, checked):
 
     # Start the timer by saving the current time to start
     start = time.time()
@@ -33,8 +33,13 @@ def run(numhouses, numwaters, runs, attempts):
     # Create an object map that is used to store information about what happens in the simulation
     mapinfo = Map()
 
-    # Place all waterbodies on the map.
-    waters = placewater(numwaters, mapinfo, screen)
+    # Create an empty list houses
+    waters = []
+
+    # While the list of waterbodies is empty, try to place all waterbodies on the map.
+    while len(waters) == 0:
+        # Try to place all waterbodies on the map.
+        waters = placewater(numwaters, mapinfo, screen)
 
     # Create an empty list houses.
     houses = []
@@ -68,7 +73,7 @@ def run(numhouses, numwaters, runs, attempts):
     with open('CSVRUN\outputruntommie%s.csv' % csvrun, "wb") as csvfile:
         writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
         # Write to csv the values that will be written to csv file for every run
-        writer.writerow(["runs", "totalvalue"])
+        writer.writerow(["runs", "totalvalue/-distance"])
 
         # For all runs, draw the waterbodies, try to replace all houses and draw the houses.
         for j in range(runs):
@@ -82,7 +87,7 @@ def run(numhouses, numwaters, runs, attempts):
                 # Draw a green rectangle over the old position of the house.
                 pygame.draw.rect(screen, GREEN, houses[k].rect, 0)
                 # try to get a new position for the house.
-                houses = replacehouse(houses[k], houses, numhouses, k, waters)
+                houses = replacehouse(houses[k], houses, numhouses, k, waters, checked)
                 # Get the new (or old) coordinates of the house and draw it to the pygame screen.
                 getcoordinates(houses[k])
                 houses[k].rect = (houses[k].pos_x_l * PAR, houses[k].pos_y_l * PAR,
@@ -91,13 +96,16 @@ def run(numhouses, numwaters, runs, attempts):
                 pygame.display.update()
 
             # Calculate the total value of the map.
-            totalvalue = calculatevalue(houses, numhouses)
+            if checked:
+                totalvalue = calculatevalue(houses, numhouses)
+            else:
+                totalvalue = calculatedistance(houses, numhouses)
 
             # Write a new row to the csv file with the current run and totalvalue.
             writer.writerow(["run %s" % j, totalvalue])
 
             # Print the attempt, the run and the totalvalue of the current run.
-            print attempts, "run", j, "= ", totalvalue, mapinfo.nochange
+            print attempts, "run", j, "= ", totalvalue
 
     # After all runs, close csv file
     csvfile.close()
@@ -120,7 +128,7 @@ def run(numhouses, numwaters, runs, attempts):
     totaltime = end - start
 
     # Write all essential parameters and results to csv files and image file
-    save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen, csvrun, totaltime)
+    save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totaldistance, screen, csvrun, totaltime)
 
 
 #####
@@ -178,6 +186,8 @@ class Water(object):
         # the surface of the waterbody is a random number between 0 and the remaining surface.
         if mapwater.waterbodies < (NUM_WATER - 1):
             self.surface = random.uniform(0, mapwater.remainingsurface)
+            while self.surface == 0 or self.surface == mapwater.remainingsurface:
+                self.surface = random.uniform(0, mapwater.remainingsurface)
         # If there is only one waterbody left to place, the waterbody gets all the remaining surface.
         else:
             self.surface = mapwater.remainingsurface
@@ -229,15 +239,6 @@ class Map(object):
         self.totalwater = (MAP_X * MAP_Y) * 0.2
         self.waterbodies = 0
         self.remainingsurface = self.totalwater
-
-        # Initialize a variable run, which is 0 at first.
-        self.runs = 0
-
-        # Initialize and set parameters used for simulated annealing
-        self.temperature = 0.80
-        self.nochange = 0
-        self.besthouses = []
-        self.bestvalue = 0
 
     # Get a random x and y coordinate on the map
     def getrandom(self, width, length, free):
@@ -551,6 +552,9 @@ def placewater(numwater, mapwater, screen):
     waters = []
     i = numwater
 
+    # Make a counter to keep track of the amound of times a house tries to get a new position.
+    replacecounter = 0
+
     # While there are still waterbodies needed to be made, append a waterbody to list waters.
     while i > 0:
         waters.append(Water(mapwater))
@@ -564,19 +568,32 @@ def placewater(numwater, mapwater, screen):
 
     # Check for all waterbodies if they have overlap with other waterbodies.
     for i in range(numwater):
+
         # Tries positions until it finds a position of the waterbody that has no overlap other waterbodies.
         while True:
-            # If overlap is found with another waterbody, get a new position for the waterbody.
-            if checkoverlap(waters[i], waters, i, True):
-                waters[i].position = mapwater.getrandom(waters[i].width, waters[i].length, 0)
-                # Get new coordinates and draw on the pygame screen.
-                getcoordinates(waters[i])
-                waters[i].rect = ((waters[i].pos_x_l * PAR), (waters[i].pos_y_l * PAR), (
-                    waters[i].width * PAR), (waters[i].length * PAR))
-                screen.fill(GREEN)
-            # If no overlap is found with other waterbodies, break from while loop.
+
+            # If the current waterbody has tried to get a new position for 500 times, return an empty list waters.
+            if replacecounter == 500:
+                waters = []
+                return waters
+
             else:
-                break
+                # If overlap is found with another waterbody, get a new position for the waterbody.
+                if checkoverlap(waters[i], waters, i, True):
+
+                    # Increment replacecounter
+                    replacecounter += 1
+
+                    # Get new position for waterbody
+                    waters[i].position = mapwater.getrandom(waters[i].width, waters[i].length, 0)
+                    # Get new coordinates and draw on the pygame screen.
+                    getcoordinates(waters[i])
+                    waters[i].rect = ((waters[i].pos_x_l * PAR), (waters[i].pos_y_l * PAR), (
+                        waters[i].width * PAR), (waters[i].length * PAR))
+                    screen.fill(GREEN)
+                # If no overlap is found with other waterbodies, break from while loop.
+                else:
+                    break
 
     # Draw all waterbodies on the pygame screen.
     screen.fill(GREEN)
@@ -592,11 +609,16 @@ def placewater(numwater, mapwater, screen):
 # This function tries to replace a house to a better position.
 # The house will only replace if the total value of the map increases.
 #####
-def replacehouse(house, houses, numhouses, housenumber, waters):
+def replacehouse(house, houses, numhouses, housenumber, waters, checked):
 
     # Save the old location of the house and the old value of the map.
     oldposition = house.position
-    oldvalue = calculatevalue(houses, numhouses)
+
+    # checked is true, save old total value of map; if false, save old total distance of map.
+    if checked:
+        oldvalue = calculatevalue(houses, numhouses)
+    else:
+        oldvalue = calculatedistance(houses, numhouses)
 
     # Find a valid location on the map.
     while True:
@@ -613,8 +635,12 @@ def replacehouse(house, houses, numhouses, housenumber, waters):
             if not checkoverlap(house, waters, housenumber, False):
                 houses[housenumber].position = house.position
 
-                # Calculate the totalvalue of the map.
-                totalvalue = calculatevalue(houses, numhouses)
+                # If checked, calculate new total value of map; if false, calculate new total distance of map.
+                if checked:
+                    # Calculate the totalvalue of the map.
+                    totalvalue = calculatevalue(houses, numhouses)
+                else:
+                    totalvalue = calculatedistance(houses, numhouses)
                 # If the new position of the house does not increase the value of the map, return to old position.
                 if totalvalue <= oldvalue:
                     houses[housenumber].position = oldposition
@@ -668,7 +694,7 @@ def calculatevalue(houses, numhouses):
 #####
 # This function prints all important variables to csv files and an image file.
 #####
-def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, screen, csvrun, totaltime):
+def save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totaldistance, screen, csvrun, totaltime):
 
     # Finds existing image files and assures no file is overwritten
     pngcount = 0
@@ -707,8 +733,9 @@ def save(numhouses, numwaters, houses, waters, runs, totalvalue, totaldistance, 
     # Print results of run in total.csv
     with open('total.csv', "a") as writefile:
         writer = csv.writer(writefile, delimiter=',', lineterminator='\n')
-        writer.writerow([numhouses, numwaters, runs, totalvalue, totaldistance, "outputtommie%s.csv" % csvcount,
-                         "outputruntommie%s.csv" % csvrun, "output%s.png" % pngcount, totaltime])
+        writer.writerow(
+            [numhouses, numwaters, runs, checked, totalvalue, totaldistance, "outputtommie%s.csv" % csvcount,
+                "outputruntommie%s.csv" % csvrun, "output%s.png" % pngcount, totaltime])
 
     # Close csv file.
     writefile.close()
@@ -725,16 +752,16 @@ k = 0
 TRY = 0
 while i < NUM_TRY20:
     NUM_WATER = random.randint(1, 4)
-    run(NUM_HOUSES20, NUM_WATER, RUNS20, TRY)
+    run(NUM_HOUSES20, NUM_WATER, RUNS20, TRY, CHECKED)
     i += 1
     TRY += 1
 while j < NUM_TRY40:
     NUM_WATER = random.randint(1, 4)
-    run(NUM_HOUSES40, NUM_WATER, RUNS40, TRY)
+    run(NUM_HOUSES40, NUM_WATER, RUNS40, TRY, CHECKED)
     j += 1
     TRY += 1
 while k < NUM_TRY60:
     NUM_WATER = random.randint(1, 4)
-    run(NUM_HOUSES60, NUM_WATER, RUNS60, TRY)
+    run(NUM_HOUSES60, NUM_WATER, RUNS60, TRY, CHECKED)
     k += 1
     TRY += 1
