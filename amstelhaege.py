@@ -18,12 +18,13 @@ from Parameters import *
 #####
 def run(numhouses, numwaters, runs, attempts, checked):
 
+    print attempts
     # Start the timer by saving the current time to start
     start = time.time()
 
     # Find existing outputrun.csv files and set counter to last csvrun file + 1
     csvrun = 0
-    while os.path.exists("CSVRUN\outputruntommie%s.csv" % csvrun):
+    while os.path.exists("CSVRUN\outputrun%s.csv" % csvrun):
         csvrun += 1
 
     # Set background of the pygame screen to green and update
@@ -70,7 +71,7 @@ def run(numhouses, numwaters, runs, attempts, checked):
     pygame.display.update()
 
     # Open/create a new csv file and set a writer
-    with open('CSVRUN\outputruntommie%s.csv' % csvrun, "wb") as csvfile:
+    with open('CSVRUN\outputrun%s.csv' % csvrun, "wb") as csvfile:
         writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
         # Write to csv the values that will be written to csv file for every run
         writer.writerow(["runs", "totalvalue/-distance"])
@@ -698,18 +699,18 @@ def save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totald
 
     # Finds existing image files and assures no file is overwritten
     pngcount = 0
-    while os.path.exists("Images\outputtommie%s.png" % pngcount):
+    while os.path.exists("Images\outputpng%s.png" % pngcount):
         pngcount += 1
     # Print visual outcome of run in image file
-    outputfinal = os.path.join(SAVE_PATH_PNG, 'outputtommie' + pngcount.__str__())
+    outputfinal = os.path.join(SAVE_PATH_PNG, 'outputpng' + pngcount.__str__())
     pygame.image.save(screen, outputfinal + '.png')
 
     # Finds existing csv files and assures no file is overwritten
     csvcount = 0
-    while os.path.exists("CSV\outputtommie%s.csv" % csvcount):
+    while os.path.exists("CSV\output%s.csv" % csvcount):
         csvcount += 1
     # Print details of outcome of run in csv file
-    with open("CSV\outputtommie%s.csv" % csvcount, 'wb') as csvfile:
+    with open("CSV\output%s.csv" % csvcount, 'wb') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
         writer.writerow(["numhouses", "runs", "totalvalue", "totaldistance"])
         writer.writerow([numhouses, runs, totalvalue, totaldistance])
@@ -734,8 +735,8 @@ def save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totald
     with open('total.csv', "a") as writefile:
         writer = csv.writer(writefile, delimiter=',', lineterminator='\n')
         writer.writerow(
-            [numhouses, numwaters, runs, checked, totalvalue, totaldistance, "outputtommie%s.csv" % csvcount,
-                "outputruntommie%s.csv" % csvrun, "output%s.png" % pngcount, totaltime])
+            [numhouses, numwaters, runs, checked, totalvalue, totaldistance, "output%s.csv" % csvcount,
+                "outputrun%s.csv" % csvrun, "outputpng%s.png" % pngcount, totaltime])
 
     # Close csv file.
     writefile.close()
