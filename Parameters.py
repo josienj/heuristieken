@@ -2,13 +2,13 @@ import pygame
 
 
 # Parameters for tries.
-NUM_TRY20 = 7393
-NUM_TRY40 = 10000
-NUM_TRY60 = 10
+NUM_TRY20 = 0
+NUM_TRY40 = 0
+NUM_TRY60 = 0
 # Paramters for runs.
 RUNS20 = 0
 RUNS40 = 0
-RUNS60 = 1000
+RUNS60 = 0
 
 # Parameters for number of houses.
 NUM_HOUSES20 = 20

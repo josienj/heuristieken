@@ -18,7 +18,6 @@ from Parameters import *
 #####
 def run(numhouses, numwaters, runs, attempts, checked):
 
-    print attempts
     # Start the timer by saving the current time to start
     start = time.time()
 
@@ -40,7 +39,7 @@ def run(numhouses, numwaters, runs, attempts, checked):
     # While the list of waterbodies is empty, try to place all waterbodies on the map.
     while len(waters) == 0:
         # Try to place all waterbodies on the map.
-        waters = placewater(numwaters, mapinfo, screen)
+        waters = placewater(numwaters, mapinfo, screen, start)
 
     # Create an empty list houses.
     houses = []
@@ -186,7 +185,7 @@ class Water(object):
         # If there is more than 1 waterbodies that has to be made,
         # the surface of the waterbody is a random number between 0 and the remaining surface.
         if mapwater.waterbodies < (NUM_WATER - 1):
-            self.surface = random.uniform(0, mapwater.remainingsurface)
+            self.surface = random.uniform((0.05 * mapwater.remainingsurface), (0.95 * mapwater.remainingsurface))
             while self.surface == 0 or self.surface == mapwater.remainingsurface:
                 self.surface = random.uniform(0, mapwater.remainingsurface)
         # If there is only one waterbody left to place, the waterbody gets all the remaining surface.
@@ -203,12 +202,16 @@ class Water(object):
         # If width is bigger, width is between squareroot and 2 times the squareroot of the total surface
         # Length is total surface / width
         if rand == 0:
-            self.width = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
+            self.width = 0
+            while self.width == 0:
+                self.width = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
             self.length = self.surface / self.width
         # If length is bigger, width is between squareroot and 2 times the squareroot of the total surface
         # Width is total surface / length
         if rand == 1:
-            self.length = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
+            self.length = 0
+            while self.length == 0:
+                self.length = random.uniform(math.sqrt(self.surface), (2 * math.sqrt(self.surface)))
             self.width = self.surface / self.length
 
         # Initialize coordinate-variables which will be assigned in getcoordinates with the current position
@@ -547,7 +550,7 @@ def placehouses(numhouses, waters):
 # This function places all required waterbodies on a valid location on the map.
 # If the first random position overlaps with another waterbody, try another random position.
 #####
-def placewater(numwater, mapwater, screen):
+def placewater(numwater, mapwater, screen, start):
 
     # Create an empty list waterbodies and a counter for the amound of waterbodies.
     waters = []
@@ -573,6 +576,12 @@ def placewater(numwater, mapwater, screen):
         # Tries positions until it finds a position of the waterbody that has no overlap other waterbodies.
         while True:
 
+            # If more than 20 seconds have passed, return empty list waters
+            currenttime = time.time()
+            if currenttime - start == 20:
+                waters = []
+                return waters
+
             # If the current waterbody has tried to get a new position for 500 times, return an empty list waters.
             if replacecounter == 500:
                 waters = []
@@ -584,6 +593,12 @@ def placewater(numwater, mapwater, screen):
 
                     # Increment replacecounter
                     replacecounter += 1
+
+                    # If more than 20 seconds have passed, return empty list waters
+                    currenttime = time.time()
+                    if currenttime - start == 20:
+                        waters = []
+                        return waters
 
                     # Get new position for waterbody
                     waters[i].position = mapwater.getrandom(waters[i].width, waters[i].length, 0)
@@ -699,10 +714,10 @@ def save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totald
 
     # Finds existing image files and assures no file is overwritten
     pngcount = 0
-    while os.path.exists("Images\outputpng%s.png" % pngcount):
+    while os.path.exists("Images\output%s.png" % pngcount):
         pngcount += 1
     # Print visual outcome of run in image file
-    outputfinal = os.path.join(SAVE_PATH_PNG, 'outputpng' + pngcount.__str__())
+    outputfinal = os.path.join(SAVE_PATH_PNG, 'output' + pngcount.__str__())
     pygame.image.save(screen, outputfinal + '.png')
 
     # Finds existing csv files and assures no file is overwritten
@@ -736,7 +751,7 @@ def save(numhouses, numwaters, houses, waters, runs, checked, totalvalue, totald
         writer = csv.writer(writefile, delimiter=',', lineterminator='\n')
         writer.writerow(
             [numhouses, numwaters, runs, checked, totalvalue, totaldistance, "output%s.csv" % csvcount,
-                "outputrun%s.csv" % csvrun, "outputpng%s.png" % pngcount, totaltime])
+                "outputrun%s.csv" % csvrun, "output%s.png" % pngcount, totaltime])
 
     # Close csv file.
     writefile.close()
